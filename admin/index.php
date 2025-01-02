@@ -73,9 +73,9 @@ if(!isset($_SESSION['admin'])){
 					<li>
 						<a href="index.php?halaman=kelolaobat"><i class="fa fa-question-circle"></i>Kelola Obat</a>
 					</li>				
-					<li>
+					<!-- <li>
 						<a href="index.php?halaman="><i class="fa fa-sign-out"></i>Profil</a>
-					</li>      
+					</li>       -->
 					<li>
 						<a href="index.php?halaman=logout"><i class="fa fa-sign-out"></i>Logout</a>
 					</li>      
@@ -97,6 +97,8 @@ if(!isset($_SESSION['admin'])){
 							include 'kelolapoli.php';
 						}elseif($_GET["halaman"] == "kelolaobat"){
 							include 'kelolaobat.php';
+						}elseif($_GET["halaman"] == "logout"){
+							include 'logout.php';
 						}
 					}
 					else{

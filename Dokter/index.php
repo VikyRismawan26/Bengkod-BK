@@ -1,186 +1,120 @@
 ﻿<?php
+// index.php
 session_start();
 
-//koneksi ke database
 include('koneksi.php');
 
-if(!isset($_SESSION['admin'])){
-	// echo "<script>location='login.php';</script>";
-	header('location:login.php');
+if (!isset($_SESSION['user']) || $_SESSION['user'] !== 'dokter' || !isset($_SESSION['dokter_id'])) {
+    header('Location: login.php');
+    exit;
 }
 
+$username = $_SESSION['username'];
+
+$query = "SELECT nama FROM dokter WHERE username = ?";
+$stmt = $koneksi->prepare($query);
+$stmt->bind_param("s", $username);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($row = $result->fetch_assoc()) {
+    $nama_lengkap = $row['nama'];
+    $nama_depan = explode(' ', $nama_lengkap)[0];
+} else {
+    $nama_depan = "Dokter";
+}
+$stmt->close();
+
+$halaman = isset($_GET['halaman']) ? htmlspecialchars($_GET['halaman']) : 'home';
+$allowed_pages = ['jadwal_praktek', 'antrian_pasien', 'daftar_pasien', 'home', 'logout'];
+
+$base_dir = __DIR__ . '/pages/';
+$page_file = $base_dir . $halaman . '.php';
 ?>
 
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Poliklinik | Dokter</title>
-	<!-- BOOTSTRAP STYLES-->
-	<link href="assets/css/bootstrap.css" rel="stylesheet" />
-	<!-- FONTAWESOME STYLES-->
-	<link href="assets/css/font-awesome.css" rel="stylesheet" />
-	<!-- MORRIS CHART STYLES-->
-	<link href="assets/js/morris/morris-0.4.3.min.css" rel="stylesheet" />
-	<!-- CUSTOM STYLES-->
-	<link href="assets/css/custom.css" rel="stylesheet" />
-	<!-- GOOGLE FONTS-->
-	<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
-	<!-- JQUERY SCRIPTS -->
-	<script src="assets/js/jquery-1.10.2.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Dokter</title>
+    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+    <link href="assets/css/font-awesome.css" rel="stylesheet" />
+    <link href="assets/css/custom.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css" />
+    <script src="assets/js/jquery-1.10.2.js"></script>
 </head>
 <body>
-
 <div id="wrapper">
-	<nav class="navbar navbar-default navbar-cls-top " role="navigation" style="margin-bottom: 0">
-		<div class="navbar-header">
-			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
-				<span class="sr-only">Toggle navigation</span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-			</button>
-			<!-- <a class="navbar-brand" href="index.php"><img src= "./assets/img/UMKMZone.png" alt="UMKMZone" width="" height="80"></a>  -->
-			<a class="navbar-brand" href="index.php">Sistem Poliklinik</a> 
-		</div>
-		<div style="color: white;
-		padding: 15px 50px 5px 50px;
-		float: right;
-		font-size: 16px;"> &nbsp; <a href="index.php?halaman=logout" class="btn btn-danger square-btn-adjust">Logout</a> 
-		</div>
-	</nav>
+    <nav class="navbar navbar-default navbar-cls-top" role="navigation" style="margin-bottom: 0">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="index.php">Dokter</a>
+        </div>
+        <div style="color: white; padding: 15px 50px 5px 50px; float: right; font-size: 16px;">
+            Halo Dokter <strong><?php echo htmlspecialchars($nama_depan); ?></strong>!
+            <a href="logout.php" class="btn btn-danger square-btn-adjust">Logout</a>
+        </div>
+    </nav>
 
-    <!-- /. NAV TOP  -->
     <nav class="navbar-default navbar-side" role="navigation">
-			<div class="sidebar-collapse">
-				<ul class="nav" id="main-menu">
-					<!-- <li class="text-center">
-						<img src="assets/img/logo_kota.png" class="user-image img-responsive"/>
-					</li> -->
-					<li>
-						<a href="index.php"><i class="fa fa-dashboard"></i>Home</a>
-					</li>
-					<li>
-						<a href="index.php?halaman=jadwalperiksa"><i class="fa fa-cube"></i> Jadwal Periksa</a>
-					</li>
-					<li>
-						<a href="index.php?halaman=faq"><i class="fa fa-question-circle"></i>Memeriksa Pasien</a>
-					</li>
-					
-					<li>
-					<!-- <?php
-							if($_SESSION['role']=="UMKMZone"){
-						?>
-							<a class="nav-link active" aria-current="page" href="index.php?halaman=pelanggan"><i class="fa fa-user"></i>Pelanggan</a>
-						<?php
-							}
-						?>
-						<?php	
-							if($_SESSION['role']=='UMKM'){
-						?>
-							<a class="nav-link disabled" aria-current="page" href="index.php?halaman=pelanggan"><i class="fa fa-user"></i>Database</a>
-						<?php
-							}
-						?> -->
+        <div class="sidebar-collapse">
+            <ul class="nav" id="main-menu">
+                <li>
+                    <a href="index.php"><i class="fa fa-dashboard"></i> Dashboard</a>
+                </li>
+                <li>
+                    <a href="index.php?halaman=jadwal_praktek"><i class="fa fa-calendar"></i> Jadwal Praktek</a>
+                </li>
+                <li>
+                    <a href="index.php?halaman=antrian_pasien"><i class="fa fa-users"></i> Antrian Pasien</a>
+                </li>
+                <li>
+                    <a href="index.php?halaman=daftar_pasien"><i class="fa fa-user-md"></i> Daftar Pasien</a>
+                </li>
+                <li>
+                    <a href="index.php?halaman=edit_profile"><i class="fa fa-users"></i> Edit Profile</a>
+                </li>
+                <li>
+                    <a href="logout.php"><i class="fa fa-sign-out"></i> Logout</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
 
-						<a href="index.php?halaman=stat"><i class="fa fa-user"></i>Riwayat Pasien</a>
-
-					</li>
-					<li>
-						<a href="index.php?halaman="><i class="fa fa-sign-out"></i>Profil</a>
-					</li>      
-					<li>
-						<a href="index.php?halaman=logout"><i class="fa fa-sign-out"></i>Logout</a>
-					</li>      
-				</ul>
-			</div>   
-    </nav>  
-    <!-- /. NAV SIDE  -->
-
-    <!-- konten -->
-    <div id="page-wrapper" >
-			<div id="page-inner">
-				<?php	
-					if(isset($_GET["halaman"])){
-						if($_GET["halaman"] == "layanan"){
-							include 'layanan.php';
-						}elseif($_GET["halaman"] == "faq"){
-							include 'faq.php';
-						}elseif($_GET["halaman"] == "survei"){
-							include 'survei.php';
-						}
-						// elseif($_GET["halaman"] == "kategori"){
-						// 	include 'kategori.php';
-						// }
-						//elseif($_GET["halaman"] == "pembelian"){
-						//	include 'pembelian.php';
-						//}
-						elseif($_GET["halaman"] == "stat"){
-							include 'stat_faq.php';
-						}
-						elseif($_GET["halaman"] == "detail"){
-							include 'detail.php';
-						}	
-						elseif($_GET["halaman"] == "tambahlayanan"){
-							include 'tambahlayanan.php';
-						}
-						elseif($_GET["halaman"] == "hapuslayanan"){
-							include 'hapuslayanan.php';
-						}
-						elseif($_GET["halaman"] == "hapusfaq"){
-							include 'hapusfaq.php';
-						}
-						elseif($_GET["halaman"] == "ubahlayanan"){
-							include 'ubahlayanan.php';
-						}
-						elseif($_GET["halaman"] == "ubahfaq"){
-							include 'ubahfaq.php';
-						}
-						elseif($_GET["halaman"] == "detaillayanan"){
-							include 'detaillayanan.php';
-						}
-						//elseif($_GET["halaman"] == "hapusfotolayanan"){
-						//	include 'hapusfotolayanan.php';
-						//}
-						//elseif($_GET["halaman"] == "pembayaran"){
-						//	include 'pembayaran.php';
-						//}
-						elseif($_GET["halaman"] == "ubahsurvei"){
-							include 'ubahsurvei.php';
-						}
-						elseif($_GET["halaman"] == "detaillayanan"){
-							include 'detaillayanan.php';
-						}
-						elseif($_GET["halaman"] == "laporan_pembelian"){
-							include 'laporan-pembelian.php';
-						}
-						elseif($_GET["halaman"] == "logout"){
-							include 'logout.php';
-						}
-
-					}
-					else{
-						include 'home.php';
-					}
-				?>                        
-			</div>
+    <div id="page-wrapper">
+        <div id="page-inner">
+        <?php
+            if (isset($_GET["halaman"])) {
+                if ($_GET["halaman"] == "jadwal_praktek") {
+                    include 'jadwal_praktek.php';
+                } elseif ($_GET["halaman"] == "antrian_pasien") {
+                    include 'antrian_pasien.php';
+                } elseif ($_GET["halaman"] == "daftar_pasien") {
+                    include 'daftar_pasien.php';
+                }elseif ($_GET["halaman"] == "edit_profile") {
+                    include 'edit_profile.php';
+                } elseif ($_GET["halaman"] == "logout") {
+                    include 'logout.php';
+                } else {
+                    echo "<h1>Halaman tidak ditemukan</h1>";
+                }
+            } else {
+                include 'home.php';
+            }
+            ?>
+        </div>
     </div>
-    <!-- akhir konten -->
-
 </div>
-	<!-- /. WRAPPER  -->
 
-	<!-- SCRIPTS -AT THE BOTOM TO REDUCE THE LOAD TIME-->
-	<!-- BOOTSTRAP SCRIPTS -->
-	<script src="assets/js/bootstrap.min.js"></script>
-	<!-- METISMENU SCRIPTS -->
-	<script src="assets/js/jquery.metisMenu.js"></script>
-	<!-- MORRIS CHART SCRIPTS -->
-	<script src="assets/js/morris/raphael-2.1.0.min.js"></script>
-	<script src="assets/js/morris/morris.js"></script>
-	<!-- CUSTOM SCRIPTS -->
-	<script src="assets/js/custom.js"></script>
-    
+<script src="assets/js/bootstrap.min.js"></script>
+<script src="assets/js/jquery.metisMenu.js"></script>
+<script src="assets/js/custom.js"></script>
+
 </body>
 </html>
